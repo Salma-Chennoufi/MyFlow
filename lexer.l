@@ -25,12 +25,12 @@ separateur ","|":"|"."|"["|"]"|"{"|"}"
 /* Opérateurs */
 op_arith "+"|"-"|"*"|"/"|"++"|"--"|"DIV"|"MOD"|"POW"|"SQRT"|"ABS"
 op_log "AND"|"OR"|"NOT"|"XOR"
-op_comp ">"|">="|"<"|"<="|"<>"|"="|"=="|"==="
+op_comp ">"|">="|"<"|"<="|"<>"|"=="|"==="
 op_affect ":="|"+="|"-="|"*="|"/="
 op_string "CONCAT"|"LEN"|"SUBSTR"
 op_char "ORD"|"CHR"
 op_ref "@"|"^"
-
+declaration "="
 /* Commentaires standards */
 comment (\/\/.*|\/\*[^]*?\*\/|\/\*\*[^]*?\*\/)
 
@@ -43,7 +43,7 @@ balise_example @example[^\n@]*
 balise_author @author[^\n@]*
 debut_comment \/\*\*\s*@
 fin_comment \*\/
-
+finIns ";"
 ExpDoc (flow doc generate [a-zA-Z0-9]+\.flow --format=[a-zA-Z]+ --output=[a-zA-Z0-9]+)
 
 %%
@@ -77,10 +77,8 @@ ExpDoc (flow doc generate [a-zA-Z0-9]+\.flow --format=[a-zA-Z]+ --output=[a-zA-Z
 
 /* Séparateurs et opérateurs */
 {separateur}  { printf("Séparateur: %s\n", yytext); }
-";"           { printf("Fin d'instruction: %c\n", yytext[0]); }
-":="          { printf("Opérateur d'affectation: %s\n", yytext); }
-"="           { printf("Opérateur de déclaration: %c\n", yytext[0]); }
-
+{finIns}           { printf("Fin d'instruction: %c\n", yytext[0]); }
+{declaration}   { printf( "Opérateur de déclaration: %c\n", yytext[0]); }
 {op_arith}    { printf("Opérateur arithmétique: %s\n", yytext); }
 {op_log}      { printf("Opérateur logique: %s\n", yytext); }
 {op_comp}     { printf("Opérateur de comparaison: %s\n", yytext); }
