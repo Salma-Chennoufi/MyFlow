@@ -6,54 +6,58 @@
 /* Définition des tokens */
 id [a-zA-Z][a-zA-Z0-9_]*
 nb [0-9]+
-espace [ \t\n\r]+
 
 /* Mots-clés du langage */
 kw PROGRAM|IMPORTS|END[ ]IMPORTS|CONSTANTS|TYPES|VARIABLES|SUBPROGRAMS|BEGIN|END|const|var|func|proc|type|return|array|record|enum|pointer|END[ ]IF|IF|THEN|ELSE|ELSIF|CASE|OF|OTHERWISE|END[ ]CASE|SWITCH|END[ ]SWITCH|DEFAULT|FOR|END[ ]FOR|TO|STEP|WHILE|END[ ]WHILE|DO|REPEAT|UNTIL|FOREACH|IN|BREAK|END[ ]FOREACH|CONTINUE|FLOOR|CEIL|CONCAT|INPUT|OUTPUT|PRINT|PRINTLN|TRY|END[ ]TRY|CATCH|FINALLY|THROW|THROWS|end|to|begin|END[ ]CONSTANTS|END[ ]TYPES|END[ ]VARIABLES|END[ ]SUBPROGRAMS|MODULE|END[ ]MODULE|EXPORT
 
 /* Littéraux */
-str \".\"|\'.\'
+str \"[^\"]*\"|\'[^\']*\'
 real {nb}\.{nb}
-boolean "true"|"false"
+boolean true|false
 
 /* Types de base */
 typeDeBase char|str|integer|real|double|boolean|string|void|null
 
 /* Séparateurs */
-separateur ","|":"|"."|"["|"]"|"{"|"}"
+separateur [,:\.\[\]\{\}]
 
 /* Opérateurs */
-op_arith "+"|"-"|"*"|"/"|"++"|"--"|"DIV"|"MOD"|"POW"|"SQRT"|"ABS"
-op_log "AND"|"OR"|"NOT"|"XOR"
-op_comp ">"|">="|"<"|"<="|"<>"|"=="|"==="
-op_affect ":="|"+="|"-="|"*="|"/="
-op_string "CONCAT"|"LEN"|"SUBSTR"
-op_char "ORD"|"CHR"
-op_ref "@"|"^"
+op_arith [+\-*/]|\+\+|\-\-|DIV|MOD|POW|SQRT|ABS
+op_log AND|OR|NOT|XOR
+op_comp >|>=|<|<=|<>|==|===
+op_affect :=|\+=|\-=|\*=|\/=
+op_string CONCAT|LEN|SUBSTR
+op_char ORD|CHR
+op_ref [@^]
 declaration "="
-/* Commentaires standards */
-comment (\/\/.*|\/\*[^]*?\*\/|\/\*\*[^]*?\*\/)
 
-/* Commentaires intelligents et leurs balises */
-comment_intelligent \/\*\*\s*@[^*]*\*\/
+/* Commentaires standards - la règle la plus spécifique d'abord */
+comment \/\/.*|\/\*([^*]|\*[^/])*\*\/
+
+/* Commentaires intelligents - plus spécifique que les commentaires standards */
+comment_intelligent \/\*\*[ \t]*@([^*]|\*[^/])*\*\/
+
+/* Balises individuelles - ne seront matchées que si elles sont en dehors des commentaires intelligents complets */
 balise_desc @desc[^\n@]*
 balise_param @param[^\n@]*
 balise_return @return[^\n@]*
 balise_example @example[^\n@]*
 balise_author @author[^\n@]*
-debut_comment \/\*\*\s*@
+
+/* Marqueurs de début et de fin de commentaire */
+debut_comment \/\*\*[ \t]*@
 fin_comment \*\/
+
 finIns ";"
-ExpDoc (flow doc generate [a-zA-Z0-9]+\.flow --format=[a-zA-Z]+ --output=[a-zA-Z0-9]+)
+ExpDoc "flow[ ]doc[ ]generate[ ][a-zA-Z0-9]+\.flow[ ]\-\-format=[a-zA-Z]+[ ]\-\-output=[a-zA-Z0-9]+"
 
 %%
-{comment}       { printf("Commentaire Simple: %s\n", yytext); }
-
-/* Support pour les commentaires intelligents */
 {comment_intelligent} { 
     printf("Commentaire Intelligent: %s\n", yytext); 
-    /* Cette règle capture un commentaire intelligent complet */
+    /* Cette règle doit être avant les règles de commentaires standards */
 }
+
+{comment}       { printf("Commentaire Simple: %s\n", yytext); }
 
 {balise_desc}       { printf("Balise Description: %s\n", yytext); }
 {balise_param}      { printf("Balise Paramètre: %s\n", yytext); }
@@ -61,24 +65,18 @@ ExpDoc (flow doc generate [a-zA-Z0-9]+\.flow --format=[a-zA-Z]+ --output=[a-zA-Z
 {balise_example}    { printf("Balise Exemple: %s\n", yytext); }
 {balise_author}     { printf("Balise Auteur: %s\n", yytext); }
 
-/* Traitement des espaces */
-{espace}      { printf("Espace: %s\n", yytext); }
+{debut_comment}     { printf("Début de commentaire intelligent: %s\n", yytext); }
+{fin_comment}       { printf("Fin de commentaire: %s\n", yytext); }
 
-/* Mots-clés et identifiants */
 {kw}          { printf("Mot clé: %s\n", yytext); }
 {typeDeBase}  { printf("Type de base: %s\n", yytext); }
-{id}          { printf("Identifiant: %s\n", yytext); }
-
-/* Littéraux */
 {nb}          { printf("Nombre entier: %s\n", yytext); }
 {real}        { printf("Nombre réel: %s\n", yytext); }
-{str}         { printf("Chaîne: %s\n", yytext); }
-{bool}        { printf("Booléen: %s\n", yytext); }
+{boolean}     { printf("Booléen: %s\n", yytext); }
 
-/* Séparateurs et opérateurs */
 {separateur}  { printf("Séparateur: %s\n", yytext); }
-{finIns}           { printf("Fin d'instruction: %c\n", yytext[0]); }
-{declaration}   { printf( "Opérateur de déclaration: %c\n", yytext[0]); }
+{finIns}      { printf("Fin d'instruction: %c\n", yytext[0]); }
+{declaration} { printf("Opérateur de déclaration: %c\n", yytext[0]); }
 {op_arith}    { printf("Opérateur arithmétique: %s\n", yytext); }
 {op_log}      { printf("Opérateur logique: %s\n", yytext); }
 {op_comp}     { printf("Opérateur de comparaison: %s\n", yytext); }
@@ -88,7 +86,8 @@ ExpDoc (flow doc generate [a-zA-Z0-9]+\.flow --format=[a-zA-Z]+ --output=[a-zA-Z
 {op_ref}      { printf("Opérateur de référence: %s\n", yytext); }
 
 {ExpDoc}      { printf("Outil de generation simple: %s\n", yytext); }
-/* Gestion des erreurs */
+
+{id}          { printf("Identifiant: %s\n", yytext); }
 .             { printf("Erreur: caractère inconnu '%s'\n", yytext); }
 
 %%

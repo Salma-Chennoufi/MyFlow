@@ -1,0 +1,39 @@
+PROGRAM TestProgram;
+IMPORTS "math.lib";
+
+CONSTANTS
+    PI = 3.1415;
+    MAX_VALUE = 100;
+
+VARIABLES
+    x, y : integer;
+    result : real;
+
+BEGIN
+    x := 10;
+    y := 20;
+    result := x + y * PI;
+    
+    IF result > MAX_VALUE THEN
+        PRINTLN("Résultat trop grand");
+    ELSE
+        PRINTLN("Résultat correct");
+    END IF;
+    
+    // Ceci est un commentaire simple
+    /* Ceci est un commentaire
+       multi-ligne */
+
+    /** @desc Cette fonction calcule une valeur **/
+    func calculate(a : real, b : real) : real;
+    
+    /* Test des opérateurs */
+    x += 5;
+    y -= 3;
+    result /= 2;
+
+    /* Test des booléens */
+    if true AND false THEN
+        PRINTLN("Jamais affiché");
+    END IF;
+END PROGRAM;
