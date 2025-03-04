@@ -6,6 +6,7 @@
 /* Définition des tokens */
 id [a-zA-Z][a-zA-Z0-9_]*
 nb [0-9]+
+espace ( |\t|\n|\r)+
 
 /* Mots-clés du langage */
 kw PROGRAM|IMPORTS|END[ ]IMPORTS|CONSTANTS|TYPES|VARIABLES|SUBPROGRAMS|BEGIN|END|const|var|func|proc|type|return|array|record|enum|pointer|END[ ]IF|IF|THEN|ELSE|ELSIF|CASE|OF|OTHERWISE|END[ ]CASE|SWITCH|END[ ]SWITCH|DEFAULT|FOR|END[ ]FOR|TO|STEP|WHILE|END[ ]WHILE|DO|REPEAT|UNTIL|FOREACH|IN|BREAK|END[ ]FOREACH|CONTINUE|FLOOR|CEIL|CONCAT|INPUT|OUTPUT|PRINT|PRINTLN|TRY|END[ ]TRY|CATCH|FINALLY|THROW|THROWS|end|to|begin|END[ ]CONSTANTS|END[ ]TYPES|END[ ]VARIABLES|END[ ]SUBPROGRAMS|MODULE|END[ ]MODULE|EXPORT
@@ -25,14 +26,15 @@ separateur [,:\.\[\]\{\}]
 op_arith [+\-*/]|\+\+|\-\-|DIV|MOD|POW|SQRT|ABS
 op_log AND|OR|NOT|XOR
 op_comp >|>=|<|<=|<>|==|===
-op_affect :=|\+=|\-=|\*=|\/=
+op_affect :=|\+=|\-=|\*=|\/=|=
 op_string CONCAT|LEN|SUBSTR
 op_char ORD|CHR
-op_ref [@^]
-declaration "="
+op_adr [@^]
+op_ref \^
+
 
 /* Commentaires standards - la règle la plus spécifique d'abord */
-comment \/\/.*|\/\*([^*]|\*[^/])*\*\/
+comment \/\/.*|/\*.*\*\//
 
 /* Commentaires intelligents - plus spécifique que les commentaires standards */
 comment_intelligent \/\*\*[ \t]*@([^*]|\*[^/])*\*\/
@@ -48,8 +50,8 @@ balise_author @author[^\n@]*
 debut_comment \/\*\*[ \t]*@
 fin_comment \*\/
 
-finIns ";"
-ExpDoc "flow[ ]doc[ ]generate[ ][a-zA-Z0-9]+\.flow[ ]\-\-format=[a-zA-Z]+[ ]\-\-output=[a-zA-Z0-9]+"
+finIns ;
+ExpDoc flow[ ]doc[ ]generate[ ][a-zA-Z0-9]+\.flow[ ]\-\-format=[a-zA-Z]+[ ]\-\-output=[a-zA-Z0-9]+
 
 %%
 {comment_intelligent} { 
@@ -68,15 +70,17 @@ ExpDoc "flow[ ]doc[ ]generate[ ][a-zA-Z0-9]+\.flow[ ]\-\-format=[a-zA-Z]+[ ]\-\-
 {debut_comment}     { printf("Début de commentaire intelligent: %s\n", yytext); }
 {fin_comment}       { printf("Fin de commentaire: %s\n", yytext); }
 
+{espace}      { /* Ignorer les espaces */ }
+
 {kw}          { printf("Mot clé: %s\n", yytext); }
 {typeDeBase}  { printf("Type de base: %s\n", yytext); }
 {nb}          { printf("Nombre entier: %s\n", yytext); }
 {real}        { printf("Nombre réel: %s\n", yytext); }
+{str}         { printf("Chaîne: %s\n", yytext); }
 {boolean}     { printf("Booléen: %s\n", yytext); }
 
 {separateur}  { printf("Séparateur: %s\n", yytext); }
 {finIns}      { printf("Fin d'instruction: %c\n", yytext[0]); }
-{declaration} { printf("Opérateur de déclaration: %c\n", yytext[0]); }
 {op_arith}    { printf("Opérateur arithmétique: %s\n", yytext); }
 {op_log}      { printf("Opérateur logique: %s\n", yytext); }
 {op_comp}     { printf("Opérateur de comparaison: %s\n", yytext); }
@@ -84,6 +88,7 @@ ExpDoc "flow[ ]doc[ ]generate[ ][a-zA-Z0-9]+\.flow[ ]\-\-format=[a-zA-Z]+[ ]\-\-
 {op_string}   { printf("Opérateur de chaîne: %s\n", yytext); }
 {op_char}     { printf("Opérateur de caractère: %s\n", yytext); }
 {op_ref}      { printf("Opérateur de référence: %s\n", yytext); }
+{op_adr}      { printf("Opérateur d'adresse: %s\n", yytext); }
 
 {ExpDoc}      { printf("Outil de generation simple: %s\n", yytext); }
 
